@@ -1,4 +1,5 @@
 library(shiny)
+library(tidyverse)
 
 ui <- fluidPage(
    
@@ -22,8 +23,10 @@ dat <- read_csv("FormattedData.csv")
 
 server <- function(input, output) {
         output$firstPlot <- renderPlot({
+                
                 g <- ggplot(dat,aes(x=IKC.Percent,y=Midterm.Percent)) +
-                        geom_point()
+                        geom_point() +
+                        geom_smooth(method="lm")
                 g
         })
 }

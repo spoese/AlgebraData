@@ -233,9 +233,6 @@ server <- function(input, output) {
                 } else {                
                         temp <- range(select(dat,!!yvar()),na.rm = TRUE)
                 }
-                if (input$plotType == "Histogram") {
-                        temp <- c(0,1156)
-                }
                 temp
         })
         myDat <- reactive({
@@ -274,16 +271,23 @@ server <- function(input, output) {
         output$firstPlot <- renderPlot({
                 if (input$plotType == "Dotplot"){
                         g <- ggplot(myDat(),aes_string(xvar(),yvar())) +
-                                geom_point() +
+                                geom_point(na.rm = TRUE) +
                                 xlim(xlims()) +
                                 ylim(ylims()) +
                                 theme_fivethirtyeight()
                         if (input$line == TRUE) {
-                                g <- g + geom_smooth(method = "lm")
+                                g <- g + geom_smooth(method = "lm",na.rm = TRUE)
                         }
                 } else if (input$plotType == "Histogram") {
+                        max <- max(select(myDat(),!!xvar()))
+                        min <- min(select(myDat(),!!yvar()))
+                        bw <- max-min/30
+                        xlimit <- c(min-bw,max+bw)
                         g <- ggplot(myDat(),aes_string(x=xvar())) +
-                                geom_histogram() +
+                                geom_histogram(aes(y=..count../sum(..count..)),
+                                               na.rm = TRUE) +
+                                xlim(xlims()+c(-bw,bw)) +
+                                ylim(c(0,1))
                                 theme_fivethirtyeight()
                 }
                 g

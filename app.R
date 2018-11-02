@@ -25,7 +25,9 @@ ui <- fluidPage(
                                    selected = c("0","1","2","3","4"),
                                    inline = TRUE),
                 h4(strong("Data:")),
-                checkboxInput("line","Include regression line?",value=TRUE),
+                selectInput("plotType","Which type of plot would you like to see?",
+                            choices = c("Dotplot","Histogram"),
+                            selected = "Dotplot"),
                 fluidRow(
                         column(6,selectInput("x","Variable 1:",
                                              choices = c("Initial Knowledge Check",
@@ -74,53 +76,57 @@ ui <- fluidPage(
                                                                "Oct21"))
                                )
                         ),
-                        column(6,selectInput("y","Variable 2:",
-                                             choices = c("Initial Knowledge Check",
-                                                         "Topic Goals",
-                                                         "Assignments",
-                                                         "Tests",
-                                                         "Overall Grade",
-                                                         "Topics/Hour",
-                                                         "Time Spent"),
-                                             selected = "Initial Knowledge Check"),
-                               conditionalPanel(
-                                       condition = "input.y == 'Topic Goals'",
-                                       selectInput("topic.y","Number",
-                                                   choices = c("All",1:8))
-                               ),
-                               conditionalPanel(
-                                       condition = "input.y == 'Assignments'",
-                                       selectInput("assignment.y","Number",
-                                                   choices = c("All","1A","1B",
-                                                               "2A","2B","2C",
-                                                               "3A","3B","3C",
-                                                               "4A","4B",
-                                                               "5A","5B",
-                                                               "6A","6B",
-                                                               "7A","7B",
-                                                               "8A","8B",
-                                                               "9A","9B"))
-                               ),
-                               conditionalPanel(
-                                       condition = "input.y == 'Tests'",
-                                       selectInput("test.y","Number",
-                                                   choices = c("All",1:3,"Midterm"))
-                               ),
-                               conditionalPanel(
-                                       condition = "input.y == 'Time Spent'",
-                                       selectInput("time.y","Where?",
-                                                   choices = c("Overall","In-class"))
-                               ),
-                               conditionalPanel(
-                                       condition = "input.y == 'Topics/Hour'",
-                                       selectInput("rate.y","Week",
-                                                   choices = c("Aug26","Sep02",
-                                                               "Sep09","Sep16",
-                                                               "Sep23","Sep30",
-                                                               "Oct7","Oct14",
-                                                               "Oct21"))
-                               )
-                        ))
+                        conditionalPanel(condition = "input.plotType == 'Dotplot'",
+                                         column(6,selectInput("y","Variable 2:",
+                                                              choices = c("Initial Knowledge Check",
+                                                                          "Topic Goals",
+                                                                          "Assignments",
+                                                                          "Tests",
+                                                                          "Overall Grade",
+                                                                          "Topics/Hour",
+                                                                          "Time Spent"),
+                                                              selected = "Initial Knowledge Check"),
+                                                conditionalPanel(
+                                                        condition = "input.y == 'Topic Goals'",
+                                                        selectInput("topic.y","Number",
+                                                                    choices = c("All",1:8))
+                                                ),
+                                                conditionalPanel(
+                                                        condition = "input.y == 'Assignments'",
+                                                        selectInput("assignment.y","Number",
+                                                                    choices = c("All","1A","1B",
+                                                                                "2A","2B","2C",
+                                                                                "3A","3B","3C",
+                                                                                "4A","4B",
+                                                                                "5A","5B",
+                                                                                "6A","6B",
+                                                                                "7A","7B",
+                                                                                "8A","8B",
+                                                                                "9A","9B"))
+                                                ),
+                                                conditionalPanel(
+                                                        condition = "input.y == 'Tests'",
+                                                        selectInput("test.y","Number",
+                                                                    choices = c("All",1:3,"Midterm"))
+                                                ),
+                                                conditionalPanel(
+                                                        condition = "input.y == 'Time Spent'",
+                                                        selectInput("time.y","Where?",
+                                                                    choices = c("Overall","In-class"))
+                                                ),
+                                                conditionalPanel(
+                                                        condition = "input.y == 'Topics/Hour'",
+                                                        selectInput("rate.y","Week",
+                                                                    choices = c("Aug26","Sep02",
+                                                                                "Sep09","Sep16",
+                                                                                "Sep23","Sep30",
+                                                                                "Oct7","Oct14",
+                                                                                "Oct21"))
+                                                )
+                                         ),
+                                         checkboxInput("line","Include regression line?",value=TRUE)
+                        )
+                )
         ),
         mainPanel(
                 tabsetPanel(
@@ -137,27 +143,8 @@ ui <- fluidPage(
 ###############################################################################
 dat <- as.data.frame(read_csv("FormattedData.csv"))
 dat$Assignment3C <- as.numeric(dat$Assignment3C)
-correspond <- data.frame(Choice = c("Initial Knowledge Check",
-                                    "Test 1",
-                                    "Test 2",
-                                    "Test 3",
-                                    "Midterm",
-                                    "Topic Goals",
-                                    "Assignments",
-                                    "All Tests",
-                                    "Overall Grade",
-                                    "Total Time"),
-                         Name = c("IKC.Percent",
-                                  "Test1.Percent",
-                                  "Test2.Percent",
-                                  "Test3.Percent",
-                                  "Midterm.Percent",
-                                  "Topics.Grade",
-                                  "Assignment.Grade",
-                                  "Test.Grade",
-                                  "Total.Grade",
-                                  "Total.Time"))
 ###############################################################################
+
 server <- function(input, output) {
         xvar <- reactive({
                 if (input$x == "Initial Knowledge Check") {
@@ -177,6 +164,8 @@ server <- function(input, output) {
                 } else if (input$x == "Tests") {
                         if (input$test.x == "All") {
                                 "Test.Grade"
+                        } else if (input$test.x == "Midterm") {
+                                "Midterm.Percent"
                         } else {
                                 paste("Test",input$test.x,".Percent",sep="")
                         }
@@ -238,12 +227,16 @@ server <- function(input, output) {
         })
         ylims <- reactive({
                 if (input$y == "Topics/Hour") {
-                        range(dat[,55:63],na.rm=TRUE)
+                        temp <- range(dat[,55:63],na.rm=TRUE)
                 } else if (input$y == "Time Spent") {
-                        range(dat[,64:65],na.rm=TRUE)
+                        temp <- range(dat[,64:65],na.rm=TRUE)
                 } else {                
-                        range(select(dat,!!yvar()),na.rm = TRUE)
+                        temp <- range(select(dat,!!yvar()),na.rm = TRUE)
                 }
+                if (input$plotType == "Histogram") {
+                        temp <- c(0,1156)
+                }
+                temp
         })
         myDat <- reactive({
                 if (input$type == "All"){
@@ -279,13 +272,19 @@ server <- function(input, output) {
                 error
         })
         output$firstPlot <- renderPlot({
-                g <- ggplot(myDat(),aes_string(xvar(),yvar())) +
-                        geom_point() +
-                        xlim(xlims()) +
-                        ylim(ylims()) +
-                        theme_fivethirtyeight()
-                if (input$line == TRUE) {
-                        g <- g + geom_smooth(method = "lm")
+                if (input$plotType == "Dotplot"){
+                        g <- ggplot(myDat(),aes_string(xvar(),yvar())) +
+                                geom_point() +
+                                xlim(xlims()) +
+                                ylim(ylims()) +
+                                theme_fivethirtyeight()
+                        if (input$line == TRUE) {
+                                g <- g + geom_smooth(method = "lm")
+                        }
+                } else if (input$plotType == "Histogram") {
+                        g <- ggplot(myDat(),aes_string(x=xvar())) +
+                                geom_histogram() +
+                                theme_fivethirtyeight()
                 }
                 g
         })

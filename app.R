@@ -5,6 +5,8 @@ ui <- fluidPage(
         
         headerPanel("Displaying IKC vs. Midterm Grades"),
         sidebarPanel(
+                h4(strong("Filters:")),
+                textInput("CRN","CRNs: (separate with commas, leave blank for any)"),
                 radioButtons("type", "Type of class:",
                              choices = c("45","50","All"),
                              selected = "All",
@@ -21,6 +23,9 @@ ui <- fluidPage(
                                    choices = c("0","1","2","3","4"),
                                    selected = c("0","1","2","3","4"),
                                    inline = TRUE)
+                # h4(strong("Data:")),
+                # radioButtons("x","Variable 1:",
+                #              choices = c(""))
         ),
         mainPanel(
                 tabsetPanel(
@@ -60,6 +65,12 @@ server <- function(input, output) {
                         temp <- filter(temp,When == input$when)
                 }
                 temp <- filter(temp,Days %in% input$days)
+                if (input$CRN == ""){
+                        temp <- temp
+                } else {
+                        CRNs <- str_split(input$CRN,",",simplify=TRUE)
+                        temp <- filter(temp,Class.Name %in% CRNs)
+                }
                 temp
         })
         output$error <- renderText({

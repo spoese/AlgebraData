@@ -28,12 +28,14 @@ ui <- fluidPage(
                 selectInput("plotType","Which type of plot would you like to see?",
                             choices = c("Dotplot","Histogram","Boxplot"),
                             selected = "Dotplot"),
-                radioButtons("plotFacet","Color by:",
+                radioButtons("plotFacet","Split by:",
                              choiceNames = list("045/050",
+                                                "None",
                                                 "DL/In-class",
                                                 "On-time/Late start",
                                                 "Days per Week"),
                              choiceValues = list("Type",
+                                                 NA,
                                                  "Where",
                                                  "When",
                                                  "Days"),
@@ -302,26 +304,35 @@ server <- function(input, output) {
                                        na.rm = TRUE) +
                         xlim(xlims()+c(-bw,bw)) +
                         ylim(c(0,1)) +
-                        theme_fivethirtyeight() +
-                        facet_grid(as.formula(paste(input$plotFacet,"~.")))
+                        theme_fivethirtyeight()
+                if (!is.na(input$plotFacet)){
+                        g <- g + facet_grid(as.formula(paste(input$plotFacet,"~.")))
+                }
                 g
         })
         output$firstPlot <- renderPlot({
                 if (input$plotType == "Dotplot"){
-                        g <- ggplot(myDat(),aes_string(xvar(),yvar())) +
-                                geom_point(aes_string(color = input$plotFacet),na.rm = TRUE) +
+                        if (is.na(input$plotFacet)) {
+                                g <- ggplot(myDat(),aes_string(xvar(),yvar()))
+                        } else {
+                                g <- ggplot(myDat(),aes_string(xvar(),yvar(),color=input$plotFacet))
+                        }
+                        g <- g + geom_point(na.rm = TRUE) +
                                 xlim(xlims()) +
-                                ylim(ylims()) +
-                                theme_fivethirtyeight()
+                                ylim(ylims())
                         if (input$line == TRUE) {
                                 g <- g + geom_smooth(method = "lm",na.rm = TRUE)
                         }
+                        g <- g + theme_fivethirtyeight()
                 } else if (input$plotType == "Histogram") {
                         g <- makeHist()
                 } else if (input$plotType == "Boxplot") {
-                        g <- ggplot(myDat(),aes_string(input$plotFacet,xvar())) +
+                        g <- ggplot(myDat(),aes_string("factor(0)",xvar())) +
                                 geom_boxplot(na.rm = TRUE) +
                                 theme_fivethirtyeight()
+                        if (!is.na(input$plotFacet)) {
+                                g <- g + geom_boxplot(aes_string(input$plotFacet,xvar()))
+                        }
                 }
                 g
         })

@@ -23,9 +23,14 @@ ui <- fluidPage(
                                    inline = TRUE)
         ),
         mainPanel(
-                h2(textOutput("error")),
-                tags$head(tags$style("#error{color: red")),
-                plotOutput("firstPlot")
+                tabsetPanel(
+                        tabPanel("Plot",
+                                 h2(textOutput("error")),
+                                 tags$head(tags$style("#error{color: red")),
+                                 plotOutput("firstPlot")),
+                        tabPanel("Table",
+                                 tableOutput("table"))
+                )
         )
 )
 
@@ -72,6 +77,10 @@ server <- function(input, output) {
                         xlim(xlims()) +
                         ylim(ylims())
                 g
+        })
+        output$table <- renderTable({
+                myDat() %>%
+                        select(Student.Name,Class.Name,IKC.Percent,Midterm.Percent)
         })
 }
 

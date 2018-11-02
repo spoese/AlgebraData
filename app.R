@@ -28,6 +28,16 @@ ui <- fluidPage(
                 selectInput("plotType","Which type of plot would you like to see?",
                             choices = c("Dotplot","Histogram","Boxplot"),
                             selected = "Dotplot"),
+                radioButtons("plotFacet","Color by:",
+                             choiceNames = list("045/050",
+                                                "DL/In-class",
+                                                "On-time/Late start",
+                                                "Days per Week"),
+                             choiceValues = list("Type",
+                                                 "Where",
+                                                 "When",
+                                                 "Days"),
+                             inline = TRUE),
                 fluidRow(
                         column(6,selectInput("x","Variable 1:",
                                              choices = c("Initial Knowledge Check",
@@ -85,7 +95,7 @@ ui <- fluidPage(
                                                                           "Overall Grade",
                                                                           "Topics/Hour",
                                                                           "Time Spent"),
-                                                              selected = "Initial Knowledge Check"),
+                                                              selected = "Tests"),
                                                 conditionalPanel(
                                                         condition = "input.y == 'Topic Goals'",
                                                         selectInput("topic.y","Number",
@@ -107,7 +117,8 @@ ui <- fluidPage(
                                                 conditionalPanel(
                                                         condition = "input.y == 'Tests'",
                                                         selectInput("test.y","Number",
-                                                                    choices = c("All",1:3,"Midterm"))
+                                                                    choices = c("All",1:3,"Midterm"),
+                                                                    selected = "Midterm")
                                                 ),
                                                 conditionalPanel(
                                                         condition = "input.y == 'Time Spent'",
@@ -148,6 +159,10 @@ ui <- fluidPage(
 ###############################################################################
 dat <- as.data.frame(read_csv("FormattedData.csv"))
 dat$Assignment3C <- as.numeric(dat$Assignment3C)
+dat$Type <- as.factor(dat$Type)
+dat$Where <- as.factor(dat$Where)
+dat$When <- as.factor(dat$When)
+dat$Days <- as.factor(dat$Days)
 get_hist <- function(p) {
         d <- ggplot_build(p)$data[[1]]
         data.frame(x = d$x, xmin = d$xmin, xmax = d$xmax, y = d$y)
@@ -280,20 +295,21 @@ server <- function(input, output) {
         makeHist <- reactive({
                 max <- max(select(myDat(),!!xvar()))
                 min <- min(select(myDat(),!!yvar()))
-                bw <- max-min/30
+                bw <- max-min/10
                 xlimit <- c(min-bw,max+bw)
                 g <- ggplot(myDat(),aes_string(x=xvar())) +
-                        geom_histogram(aes(y=..count../sum(..count..)),
+                        geom_histogram(aes(y=..count../sum(..count..)),bins=10,
                                        na.rm = TRUE) +
                         xlim(xlims()+c(-bw,bw)) +
-                        ylim(c(0,1))
-                theme_fivethirtyeight()
+                        ylim(c(0,1)) +
+                        theme_fivethirtyeight() +
+                        facet_grid(as.formula(paste(input$plotFacet,"~.")))
                 g
         })
         output$firstPlot <- renderPlot({
                 if (input$plotType == "Dotplot"){
                         g <- ggplot(myDat(),aes_string(xvar(),yvar())) +
-                                geom_point(na.rm = TRUE) +
+                                geom_point(aes_string(color = input$plotFacet),na.rm = TRUE) +
                                 xlim(xlims()) +
                                 ylim(ylims()) +
                                 theme_fivethirtyeight()
@@ -301,9 +317,9 @@ server <- function(input, output) {
                                 g <- g + geom_smooth(method = "lm",na.rm = TRUE)
                         }
                 } else if (input$plotType == "Histogram") {
-                       g <- makeHist()
+                        g <- makeHist()
                 } else if (input$plotType == "Boxplot") {
-                        g <- ggplot(myDat(),aes_string("factor(0)",xvar())) +
+                        g <- ggplot(myDat(),aes_string(input$plotFacet,xvar())) +
                                 geom_boxplot(na.rm = TRUE) +
                                 theme_fivethirtyeight()
                 }
@@ -316,10 +332,10 @@ server <- function(input, output) {
                 temp
         })
         output$histTable <- renderTable({
-               p <- get_hist(makeHist())
-               ranges <- apply(p,1,function(x) paste("[",max(0,round(x[2],2)),",",min(1,round(x[3],2)),")",sep=""))
-               q <- data.frame(Range = ranges, Percent = p[,4]*100)
-               q
+                p <- get_hist(makeHist())
+                ranges <- apply(p,1,function(x) paste("[",max(0,round(x[2],2)),",",min(1,round(x[3],2)),")",sep=""))
+                q <- data.frame(Range = ranges, Percent = p[,4]*100)
+                q
         })
 }
 

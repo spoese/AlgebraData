@@ -133,7 +133,12 @@ ui <- fluidPage(
                         tabPanel("Plot",
                                  h2(textOutput("error")),
                                  tags$head(tags$style("#error{color: red")),
-                                 plotOutput("firstPlot")),
+                                 plotOutput("firstPlot"),
+                                 conditionalPanel(
+                                         condition = "input.plotType == 'Histogram'",
+                                         h3("Table of Bins"),
+                                         tableOutput("histTable")
+                                 )),
                         tabPanel("Table",
                                  tableOutput("table"))
                 )
@@ -143,6 +148,10 @@ ui <- fluidPage(
 ###############################################################################
 dat <- as.data.frame(read_csv("FormattedData.csv"))
 dat$Assignment3C <- as.numeric(dat$Assignment3C)
+get_hist <- function(p) {
+        d <- ggplot_build(p)$data[[1]]
+        data.frame(x = d$x, xmin = d$xmin, xmax = d$xmax, y = d$y)
+}
 ###############################################################################
 
 server <- function(input, output) {
@@ -268,6 +277,19 @@ server <- function(input, output) {
                 }
                 error
         })
+        makeHist <- reactive({
+                max <- max(select(myDat(),!!xvar()))
+                min <- min(select(myDat(),!!yvar()))
+                bw <- max-min/30
+                xlimit <- c(min-bw,max+bw)
+                g <- ggplot(myDat(),aes_string(x=xvar())) +
+                        geom_histogram(aes(y=..count../sum(..count..)),
+                                       na.rm = TRUE) +
+                        xlim(xlims()+c(-bw,bw)) +
+                        ylim(c(0,1))
+                theme_fivethirtyeight()
+                g
+        })
         output$firstPlot <- renderPlot({
                 if (input$plotType == "Dotplot"){
                         g <- ggplot(myDat(),aes_string(xvar(),yvar())) +
@@ -279,22 +301,19 @@ server <- function(input, output) {
                                 g <- g + geom_smooth(method = "lm",na.rm = TRUE)
                         }
                 } else if (input$plotType == "Histogram") {
-                        max <- max(select(myDat(),!!xvar()))
-                        min <- min(select(myDat(),!!yvar()))
-                        bw <- max-min/30
-                        xlimit <- c(min-bw,max+bw)
-                        g <- ggplot(myDat(),aes_string(x=xvar())) +
-                                geom_histogram(aes(y=..count../sum(..count..)),
-                                               na.rm = TRUE) +
-                                xlim(xlims()+c(-bw,bw)) +
-                                ylim(c(0,1))
-                                theme_fivethirtyeight()
+                       g <- makeHist()
                 }
                 g
         })
         output$table <- renderTable({
                 myDat() %>%
                         select(Student.Name,Class.Name,!!xvar(),!!yvar())
+        })
+        output$histTable <- renderTable({
+               p <- get_hist(makeHist())
+               ranges <- apply(p,1,function(x) paste("[",max(0,round(x[2],2)),",",min(1,round(x[3],2)),")",sep=""))
+               q <- data.frame(Range = ranges, Percent = p[,4]*100)
+               q
         })
 }
 

@@ -1,9 +1,10 @@
 library(shiny)
 library(tidyverse)
+library(ggthemes)
 
 ui <- fluidPage(
         
-        headerPanel("Displaying IKC vs. Midterm Grades"),
+        headerPanel("Data for Algebra (through Oct. 28)"),
         sidebarPanel(
                 h4(strong("Filters:")),
                 textInput("CRN","CRNs: (separate with commas, leave blank for any)"),
@@ -22,10 +23,69 @@ ui <- fluidPage(
                 checkboxGroupInput("days","How many days/week does the class meet?",
                                    choices = c("0","1","2","3","4"),
                                    selected = c("0","1","2","3","4"),
-                                   inline = TRUE)
-                # h4(strong("Data:")),
-                # radioButtons("x","Variable 1:",
-                #              choices = c(""))
+                                   inline = TRUE),
+                h4(strong("Data:")),
+                checkboxInput("line","Include regression line?",value=TRUE),
+                fluidRow(
+                        column(6,selectInput("x","Variable 1:",
+                                     choices = c("Initial Knowledge Check",
+                                                 "Topic Goals",
+                                                 "Assignments",
+                                                 "Tests",
+                                                 "Overall Grade",
+                                                 "Topics/Hour",
+                                                 "Time Spent"),
+                                     selected = "Initial Knowledge Check"),
+                               conditionalPanel(
+                                       condition = "input.x == 'Topic Goals'",
+                                       selectInput("topic.x","Number",
+                                                   choices = c("All",1:8))
+                               ),
+                               conditionalPanel(
+                                       condition = "input.x == 'Assignments'",
+                                       selectInput("assignment.x","Number",
+                                                   choices = c("All","1A","1B",
+                                                               "2A","2B","2C",
+                                                               "3A","3B","3C",
+                                                               "4A","4B",
+                                                               "5A","5B",
+                                                               "6A","6B",
+                                                               "7A","7B",
+                                                               "8A","8B",
+                                                               "9A","9B"))
+                               ),
+                               conditionalPanel(
+                                       condition = "input.x == 'Tests'",
+                                       selectInput("test.x","Number",
+                                                   choices = c("All",1:3,"Midterm"))
+                               ),
+                               conditionalPanel(
+                                       condition = "input.x == 'Time Spent'",
+                                       selectInput("time.x","Where?",
+                                                   choices = c("Overall","In-class"))
+                               ),
+                               conditionalPanel(
+                                       condition = "input.x == 'Topics/Hour'",
+                                       selectInput("rate.x","Week",
+                                                   choices = c("Aug26","Sep02",
+                                                               "Sep09","Sep16",
+                                                               "Sep23","Sep30",
+                                                               "Oct7","Oct14",
+                                                               "Oct21"))
+                               )
+                               ),
+                        column(6,radioButtons("y","Variable 2:",
+                                     choices = c("Initial Knowledge Check",
+                                                 "Test 1",
+                                                 "Test 2",
+                                                 "Test 3",
+                                                 "Midterm",
+                                                 "Topic Goals",
+                                                 "Assignments",
+                                                 "All Tests",
+                                                 "Overall Grade",
+                                                 "Total Time"),
+                                     selected = "Midterm")))
         ),
         mainPanel(
                 tabsetPanel(
@@ -40,13 +100,69 @@ ui <- fluidPage(
 )
 
 dat <- as.data.frame(read_csv("FormattedData.csv"))
+correspond <- data.frame(Choice = c("Initial Knowledge Check",
+                                    "Test 1",
+                                    "Test 2",
+                                    "Test 3",
+                                    "Midterm",
+                                    "Topic Goals",
+                                    "Assignments",
+                                    "All Tests",
+                                    "Overall Grade",
+                                    "Total Time"),
+                         Name = c("IKC.Percent",
+                                  "Test1.Percent",
+                                  "Test2.Percent",
+                                  "Test3.Percent",
+                                  "Midterm.Percent",
+                                  "Topics.Grade",
+                                  "Assignment.Grade",
+                                  "Test.Grade",
+                                  "Total.Grade",
+                                  "Total.Time"))
 
 server <- function(input, output) {
+        xvar <- reactive({
+                if (input$x == "Initial Knowledge Check") {
+                        "IKC.Percent"
+                } else if (input$x == "Topic Goals") {
+                        if (input$topic.x == "All") {
+                                "Topics.Grade"
+                        } else {
+                                paste("Topics",input$topic.x,sep="")
+                        }
+                } else if (input$x == "Assignments") {
+                        if (input$assignment.x == "All") {
+                                "Assignment.Grade"
+                        } else {
+                                paste("Assignment",input$assignment.x,sep="")
+                        }
+                } else if (input$x == "Tests") {
+                        if (input$test.x == "All") {
+                                "Test.Grade"
+                        } else {
+                                paste("Test",input$test.x,".Percent",sep="")
+                        }
+                } else if (input$x == "Overall Grade") {
+                        "Total.Grade"
+                } else if (input$x == "Topics/Hour") {
+                        paste("Rate",input$rate.x,sep=".")
+                } else if (input$x == "Time Spent") {
+                        if (input$time.x == "Overall") {
+                                "Total.Time"
+                        } else {
+                                "Time.In.Class"
+                        }
+                }
+        })
+        yvar <- reactive({
+                as.character(correspond$Name[grep(input$y,correspond$Choice)])
+        })
         xlims <- reactive({
-                range(dat$IKC.Percent,na.rm = TRUE)
+                range(select(dat,!!xvar()),na.rm = TRUE)
         })
         ylims <- reactive({
-                range(dat$Midterm.Percent, na.rm = TRUE)
+                range(select(dat,!!yvar()), na.rm = TRUE)
         })
         myDat <- reactive({
                 if (input$type == "All"){
@@ -82,16 +198,19 @@ server <- function(input, output) {
                 error
         })
         output$firstPlot <- renderPlot({
-                g <- ggplot(myDat(),aes(x=IKC.Percent,y=Midterm.Percent)) +
+                g <- ggplot(myDat(),aes_string(xvar(),yvar())) +
                         geom_point() +
-                        geom_smooth(method = "lm") +
                         xlim(xlims()) +
-                        ylim(ylims())
+                        ylim(ylims()) +
+                        theme_fivethirtyeight()
+                if (input$line == TRUE) {
+                        g <- g + geom_smooth(method = "lm")
+                }
                 g
         })
         output$table <- renderTable({
                 myDat() %>%
-                        select(Student.Name,Class.Name,IKC.Percent,Midterm.Percent)
+                        select(Student.Name,Class.Name,!!xvar(),!!yvar())
         })
 }
 

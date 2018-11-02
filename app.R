@@ -26,7 +26,7 @@ ui <- fluidPage(
                                    inline = TRUE),
                 h4(strong("Data:")),
                 selectInput("plotType","Which type of plot would you like to see?",
-                            choices = c("Dotplot","Histogram"),
+                            choices = c("Dotplot","Histogram","Boxplot"),
                             selected = "Dotplot"),
                 fluidRow(
                         column(6,selectInput("x","Variable 1:",
@@ -302,12 +302,18 @@ server <- function(input, output) {
                         }
                 } else if (input$plotType == "Histogram") {
                        g <- makeHist()
+                } else if (input$plotType == "Boxplot") {
+                        g <- ggplot(myDat(),aes_string("factor(0)",xvar())) +
+                                geom_boxplot(na.rm = TRUE) +
+                                theme_fivethirtyeight()
                 }
                 g
         })
         output$table <- renderTable({
-                myDat() %>%
-                        select(Student.Name,Class.Name,!!xvar(),!!yvar())
+                temp <- myDat() %>%
+                        select(Student.Name,Class.Name,!!xvar())
+                if(input$plotType == "Dotplot"){temp <- cbind(temp,select(myDat(),!!yvar()))}
+                temp
         })
         output$histTable <- renderTable({
                p <- get_hist(makeHist())

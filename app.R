@@ -29,13 +29,13 @@ ui <- fluidPage(
                             choices = c("Dotplot","Histogram","Boxplot"),
                             selected = "Dotplot"),
                 radioButtons("plotFacet","Split by:",
-                             choiceNames = list("045/050",
-                                                "None",
+                             choiceNames = list("None",
+                                                "045/050",
                                                 "DL/In-class",
                                                 "On-time/Late start",
                                                 "Days per Week"),
-                             choiceValues = list("Type",
-                                                 NA,
+                             choiceValues = list("None",
+                                                 "Type",
                                                  "Where",
                                                  "When",
                                                  "Days"),
@@ -300,19 +300,26 @@ server <- function(input, output) {
                 bw <- max-min/10
                 xlimit <- c(min-bw,max+bw)
                 g <- ggplot(myDat(),aes_string(x=xvar())) +
-                        geom_histogram(aes(y=..count../sum(..count..)),bins=10,
+                        geom_histogram(aes(y=..count../sum(..count..)),
+                                       bins=10,
+                                       col = I("black"),
+                                       fill = I("red"),
                                        na.rm = TRUE) +
                         xlim(xlims()+c(-bw,bw)) +
                         ylim(c(0,1)) +
-                        theme_fivethirtyeight()
-                if (!is.na(input$plotFacet)){
+                        labs(title = "Histogram of Selected Data", x = xvar(), y = "Count") +
+                        theme_tufte() + theme(axis.text = element_text(size = 20)) +
+                        theme(axis.text = element_text(size = 15),
+                              axis.title = element_text(size = 15),
+                              title = element_text(size = 15))
+                if (input$plotFacet != "None"){
                         g <- g + facet_grid(as.formula(paste(input$plotFacet,"~.")))
                 }
                 g
         })
         output$firstPlot <- renderPlot({
                 if (input$plotType == "Dotplot"){
-                        if (is.na(input$plotFacet)) {
+                        if (input$plotFacet == "None") {
                                 g <- ggplot(myDat(),aes_string(xvar(),yvar()))
                         } else {
                                 g <- ggplot(myDat(),aes_string(xvar(),yvar(),color=input$plotFacet))
@@ -323,16 +330,34 @@ server <- function(input, output) {
                         if (input$line == TRUE) {
                                 g <- g + geom_smooth(method = "lm",na.rm = TRUE)
                         }
-                        g <- g + theme_fivethirtyeight()
+                        g <- g + theme_tufte() + theme(axis.text = element_text(size = 20)) +
+                                labs(title = "Scatterplot of Selected Data", x = xvar(), y = yvar()) +
+                                theme(axis.text = element_text(size = 15),
+                                      axis.title = element_text(size = 15),
+                                      title = element_text(size = 15))
                 } else if (input$plotType == "Histogram") {
                         g <- makeHist()
                 } else if (input$plotType == "Boxplot") {
-                        g <- ggplot(myDat(),aes_string("factor(0)",xvar())) +
-                                geom_boxplot(na.rm = TRUE) +
-                                theme_fivethirtyeight()
-                        if (!is.na(input$plotFacet)) {
-                                g <- g + geom_boxplot(aes_string(input$plotFacet,xvar()))
+                        g <- ggplot(myDat()) +
+                                geom_boxplot(aes_string("factor(0)",xvar()),na.rm = TRUE) +
+                                labs(title = "Boxplot for Selected Data",
+                                     x = xvar(),
+                                     y = "Values") +
+                                theme_tufte() + theme(axis.text = element_text(size = 15),
+                                                      axis.title = element_text(size = 15),
+                                                      title = element_text(size = 15))
+                        if (input$plotFacet != "None") {
+                                g <- ggplot(myDat()) +
+                                        geom_boxplot(aes_string(input$plotFacet,xvar()),na.rm=TRUE) +
+                                        theme_tufte() + theme(axis.text = element_text(size = 20)) +
+                                        labs(title = "Boxplot for Selected Data",
+                                             x = xvar(),
+                                             y = "Values") +
+                                        theme(axis.text = element_text(size = 15),
+                                              axis.title = element_text(size = 15),
+                                              title = element_text(size = 15))
                         }
+                        
                 }
                 g
         })

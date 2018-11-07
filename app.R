@@ -165,6 +165,7 @@ dat$Type <- as.factor(dat$Type)
 dat$Where <- as.factor(dat$Where)
 dat$When <- as.factor(dat$When)
 dat$Days <- as.factor(dat$Days)
+dat$ID <- 1:length(dat$Student.Name)
 get_hist <- function(p) {
         d <- ggplot_build(p)$data[[1]]
         data.frame(x = d$x, xmin = d$xmin, xmax = d$xmax, y = d$y)
@@ -363,7 +364,7 @@ server <- function(input, output) {
         })
         output$table <- renderTable({
                 temp <- myDat() %>%
-                        select(Student.Name,Class.Name,!!xvar())
+                        select(ID,Class.Name,!!xvar())
                 if(input$plotType == "Dotplot"){temp <- cbind(temp,select(myDat(),!!yvar()))}
                 temp
         })

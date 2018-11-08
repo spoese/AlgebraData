@@ -1,168 +1,173 @@
 library(shiny)
 library(tidyverse)
 library(ggthemes)
+library(shinythemes)
 
-ui <- fluidPage(
-        
-        headerPanel("Data for Algebra (through Nov. 8)"),
-        sidebarPanel(
-                h4(strong("Filters:")),
-                textInput("CRN","CRNs: (separate with commas, leave blank for any)"),
-                radioButtons("type", "Type of class:",
-                             choices = c("45","50","All"),
-                             selected = "All",
-                             inline = TRUE),
-                radioButtons("where", "Where does the class meet?",
-                             choices = c("DL","On-Campus","Anywhere"),
-                             selected = "Anywhere",
-                             inline = TRUE),
-                radioButtons("when", "When did the class start?",
-                             choices = c("On-time","Late","Any"),
-                             selected = "Any",
-                             inline = TRUE),
-                checkboxGroupInput("days","How many days/week does the class meet?",
-                                   choices = c("0","1","2","3","4"),
-                                   selected = c("0","1","2","3","4"),
-                                   inline = TRUE),
-                h4(strong("Data:")),
-                selectInput("plotType","Which type of plot would you like to see?",
-                            choices = c("Dotplot","Histogram","Boxplot"),
-                            selected = "Dotplot"),
-                radioButtons("plotFacet","Split by:",
-                             choiceNames = list("None",
-                                                "045/050",
-                                                "DL/In-class",
-                                                "On-time/Late start",
-                                                "Days per Week"),
-                             choiceValues = list("None",
-                                                 "Type",
-                                                 "Where",
-                                                 "When",
-                                                 "Days"),
-                             inline = TRUE),
-                fluidRow(
-                        column(6,selectInput("x","Variable 1:",
-                                             choices = c("Initial Knowledge Check",
-                                                         "Topic Goals",
-                                                         "Assignments",
-                                                         "Tests",
-                                                         "Overall Grade",
-                                                         "Topics/Hour",
-                                                         "Time Spent"),
-                                             selected = "Assignments"),
-                               conditionalPanel(
-                                       condition = "input.x == 'Topic Goals'",
-                                       selectInput("topic.x","Number",
-                                                   choices = c("All",1:10))
-                               ),
-                               conditionalPanel(
-                                       condition = "input.x == 'Assignments'",
-                                       selectInput("assignment.x","Number",
-                                                   choices = c("All","1A","1B",
-                                                               "2A","2B","2C",
-                                                               "3A","3B","3C",
-                                                               "4A","4B",
-                                                               "5A","5B",
-                                                               "6A","6B",
-                                                               "7A","7B",
-                                                               "8A","8B",
-                                                               "9A","9B",
-                                                               "10A","10B",
-                                                               "11A"),
-                                                   selected = "10A")
-                               ),
-                               conditionalPanel(
-                                       condition = "input.x == 'Tests'",
-                                       selectInput("test.x","Number",
-                                                   choices = c("All",1:4,"Midterm"))
-                               ),
-                               conditionalPanel(
-                                       condition = "input.x == 'Time Spent'",
-                                       selectInput("time.x","Where?",
-                                                   choices = c("Overall","In-class"))
-                               ),
-                               conditionalPanel(
-                                       condition = "input.x == 'Topics/Hour'",
-                                       selectInput("rate.x","Week",
-                                                   choices = c("Aug26","Sep02",
-                                                               "Sep09","Sep16",
-                                                               "Sep23","Sep30",
-                                                               "Oct7","Oct14",
-                                                               "Oct21","Oct28",
-                                                               "Nov4"))
-                               )
-                        ),
-                        conditionalPanel(condition = "input.plotType == 'Dotplot'",
-                                         column(6,selectInput("y","Variable 2:",
-                                                              choices = c("Initial Knowledge Check",
-                                                                          "Topic Goals",
-                                                                          "Assignments",
-                                                                          "Tests",
-                                                                          "Overall Grade",
-                                                                          "Topics/Hour",
-                                                                          "Time Spent"),
-                                                              selected = "Tests"),
-                                                conditionalPanel(
-                                                        condition = "input.y == 'Topic Goals'",
-                                                        selectInput("topic.y","Number",
-                                                                    choices = c("All",1:10))
-                                                ),
-                                                conditionalPanel(
-                                                        condition = "input.y == 'Assignments'",
-                                                        selectInput("assignment.y","Number",
-                                                                    choices = c("All","1A","1B",
-                                                                                "2A","2B","2C",
-                                                                                "3A","3B","3C",
-                                                                                "4A","4B",
-                                                                                "5A","5B",
-                                                                                "6A","6B",
-                                                                                "7A","7B",
-                                                                                "8A","8B",
-                                                                                "9A","9B",
-                                                                                "10A","10B",
-                                                                                "11A"))
-                                                ),
-                                                conditionalPanel(
-                                                        condition = "input.y == 'Tests'",
-                                                        selectInput("test.y","Number",
-                                                                    choices = c("All",1:4,"Midterm"),
-                                                                    selected = 4)
-                                                ),
-                                                conditionalPanel(
-                                                        condition = "input.y == 'Time Spent'",
-                                                        selectInput("time.y","Where?",
-                                                                    choices = c("Overall","In-class"))
-                                                ),
-                                                conditionalPanel(
-                                                        condition = "input.y == 'Topics/Hour'",
-                                                        selectInput("rate.y","Week",
-                                                                    choices = c("Aug26","Sep02",
-                                                                                "Sep09","Sep16",
-                                                                                "Sep23","Sep30",
-                                                                                "Oct7","Oct14",
-                                                                                "Oct21","Oct28",
-                                                                                "Nov4"))
-                                                )
-                                         ),
-                                         checkboxInput("line","Include regression line?",value=TRUE)
+ui <- fluidPage(theme = shinytheme("flatly"),
+       
+                headerPanel("Data for Algebra (through Nov. 8)"),
+                sidebarPanel(
+                        h4(strong("Filters:")),
+                        textInput("CRN","CRNs: (separate with commas, leave blank for any)"),
+                        radioButtons("type", "Type of class:",
+                                     choices = c("45","50","All"),
+                                     selected = "All",
+                                     inline = TRUE),
+                        radioButtons("where", "Where does the class meet?",
+                                     choices = c("DL","On-Campus","Anywhere"),
+                                     selected = "Anywhere",
+                                     inline = TRUE),
+                        radioButtons("when", "When did the class start?",
+                                     choices = c("On-time","Late","Any"),
+                                     selected = "Any",
+                                     inline = TRUE),
+                        checkboxGroupInput("days","How many days/week does the class meet?",
+                                           choices = c("0","1","2","3","4"),
+                                           selected = c("0","1","2","3","4"),
+                                           inline = TRUE),
+                        h4(strong("Data:")),
+                        selectInput("plotType","Which type of plot would you like to see?",
+                                    choices = c("Dotplot","Histogram","Boxplot"),
+                                    selected = "Dotplot"),
+                        radioButtons("plotFacet","Split by:",
+                                     choiceNames = list("None",
+                                                        "045/050",
+                                                        "DL/In-class",
+                                                        "On-time/Late start",
+                                                        "Days per Week"),
+                                     choiceValues = list("None",
+                                                         "Type",
+                                                         "Where",
+                                                         "When",
+                                                         "Days"),
+                                     inline = TRUE),
+                        fluidRow(
+                                column(6,selectInput("x","Variable 1:",
+                                                     choices = c("Initial Knowledge Check",
+                                                                 "Topic Goals",
+                                                                 "Assignments",
+                                                                 "Tests",
+                                                                 "Overall Grade",
+                                                                 "Topics/Hour",
+                                                                 "Time Spent"),
+                                                     selected = "Assignments"),
+                                       conditionalPanel(
+                                               condition = "input.x == 'Topic Goals'",
+                                               selectInput("topic.x","Number",
+                                                           choices = c("All",1:10))
+                                       ),
+                                       conditionalPanel(
+                                               condition = "input.x == 'Assignments'",
+                                               selectInput("assignment.x","Number",
+                                                           choices = c("All","1A","1B",
+                                                                       "2A","2B","2C",
+                                                                       "3A","3B","3C",
+                                                                       "4A","4B",
+                                                                       "5A","5B",
+                                                                       "6A","6B",
+                                                                       "7A","7B",
+                                                                       "8A","8B",
+                                                                       "9A","9B",
+                                                                       "10A","10B",
+                                                                       "11A"),
+                                                           selected = "10A")
+                                       ),
+                                       conditionalPanel(
+                                               condition = "input.x == 'Tests'",
+                                               selectInput("test.x","Number",
+                                                           choices = c("All",1:4,"Midterm"))
+                                       ),
+                                       conditionalPanel(
+                                               condition = "input.x == 'Time Spent'",
+                                               selectInput("time.x","Where?",
+                                                           choices = c("Overall","In-class"))
+                                       ),
+                                       conditionalPanel(
+                                               condition = "input.x == 'Topics/Hour'",
+                                               selectInput("rate.x","Week",
+                                                           choices = c("Aug26","Sep02",
+                                                                       "Sep09","Sep16",
+                                                                       "Sep23","Sep30",
+                                                                       "Oct7","Oct14",
+                                                                       "Oct21","Oct28",
+                                                                       "Nov4"))
+                                       )
+                                ),
+                                
+                                                 column(6,
+                                                        conditionalPanel(condition = "input.plotType == 'Dotplot'",
+                                                        selectInput("y","Variable 2:",
+                                                                       choices = c("Initial Knowledge Check",
+                                                                                   "Topic Goals",
+                                                                                   "Assignments",
+                                                                                   "Tests",
+                                                                                   "Overall Grade",
+                                                                                   "Topics/Hour",
+                                                                                   "Time Spent"),
+                                                                       selected = "Tests"),
+                                                        conditionalPanel(
+                                                                condition = "input.y == 'Topic Goals'",
+                                                                selectInput("topic.y","Number",
+                                                                            choices = c("All",1:10))
+                                                        ),
+                                                        conditionalPanel(
+                                                                condition = "input.y == 'Assignments'",
+                                                                selectInput("assignment.y","Number",
+                                                                            choices = c("All","1A","1B",
+                                                                                        "2A","2B","2C",
+                                                                                        "3A","3B","3C",
+                                                                                        "4A","4B",
+                                                                                        "5A","5B",
+                                                                                        "6A","6B",
+                                                                                        "7A","7B",
+                                                                                        "8A","8B",
+                                                                                        "9A","9B",
+                                                                                        "10A","10B",
+                                                                                        "11A"))
+                                                        ),
+                                                        conditionalPanel(
+                                                                condition = "input.y == 'Tests'",
+                                                                selectInput("test.y","Number",
+                                                                            choices = c("All",1:4,"Midterm"),
+                                                                            selected = 4)
+                                                        ),
+                                                        conditionalPanel(
+                                                                condition = "input.y == 'Time Spent'",
+                                                                selectInput("time.y","Where?",
+                                                                            choices = c("Overall","In-class"))
+                                                        ),
+                                                        conditionalPanel(
+                                                                condition = "input.y == 'Topics/Hour'",
+                                                                selectInput("rate.y","Week",
+                                                                            choices = c("Aug26","Sep02",
+                                                                                        "Sep09","Sep16",
+                                                                                        "Sep23","Sep30",
+                                                                                        "Oct7","Oct14",
+                                                                                        "Oct21","Oct28",
+                                                                                        "Nov4"))
+                                                        ),
+                                                        checkboxInput("line","Include regression line?",value=TRUE)
+                                                 )
+                                                 
+                                )
+                        )
+                        
+                ),
+                mainPanel(
+                        tabsetPanel(
+                                tabPanel("Plot",
+                                         h2(textOutput("error")),
+                                         tags$head(tags$style("#error{color: red")),
+                                         plotOutput("firstPlot",height = 745),
+                                         conditionalPanel(
+                                                 condition = "input.plotType == 'Histogram'",
+                                                 h3("Table of Bins"),
+                                                 tableOutput("histTable")
+                                         )),
+                                tabPanel("Table",
+                                         tableOutput("table"))
                         )
                 )
-        ),
-        mainPanel(
-                tabsetPanel(
-                        tabPanel("Plot",
-                                 h2(textOutput("error")),
-                                 tags$head(tags$style("#error{color: red")),
-                                 plotOutput("firstPlot"),
-                                 conditionalPanel(
-                                         condition = "input.plotType == 'Histogram'",
-                                         h3("Table of Bins"),
-                                         tableOutput("histTable")
-                                 )),
-                        tabPanel("Table",
-                                 tableOutput("table"))
-                )
-        )
 )
 
 ###############################################################################
@@ -315,11 +320,7 @@ server <- function(input, output) {
                                        na.rm = TRUE) +
                         xlim(xlims()+c(-bw,bw)) +
                         ylim(c(0,1)) +
-                        labs(title = "Histogram of Selected Data", x = xvar(), y = "Count") +
-                        theme_tufte() + theme(axis.text = element_text(size = 20)) +
-                        theme(axis.text = element_text(size = 15),
-                              axis.title = element_text(size = 15),
-                              title = element_text(size = 15))
+                        labs(title = "Histogram of Selected Data", x = xvar(), y = "Count")
                 if (input$plotFacet != "None"){
                         g <- g + facet_grid(as.formula(paste(input$plotFacet,"~.")))
                 }
@@ -338,11 +339,7 @@ server <- function(input, output) {
                         if (input$line == TRUE) {
                                 g <- g + geom_smooth(method = "lm",na.rm = TRUE)
                         }
-                        g <- g + theme_tufte() + theme(axis.text = element_text(size = 20)) +
-                                labs(title = "Scatterplot of Selected Data", x = xvar(), y = yvar()) +
-                                theme(axis.text = element_text(size = 15),
-                                      axis.title = element_text(size = 15),
-                                      title = element_text(size = 15))
+                        g <- g + labs(title = "Scatterplot of Selected Data", x = xvar(), y = yvar())
                 } else if (input$plotType == "Histogram") {
                         g <- makeHist()
                 } else if (input$plotType == "Boxplot") {
@@ -350,24 +347,20 @@ server <- function(input, output) {
                                 geom_boxplot(aes_string("factor(0)",xvar()),na.rm = TRUE) +
                                 labs(title = "Boxplot for Selected Data",
                                      x = xvar(),
-                                     y = "Values") +
-                                theme_tufte() + theme(axis.text = element_text(size = 15),
-                                                      axis.title = element_text(size = 15),
-                                                      title = element_text(size = 15))
+                                     y = "Values")
                         if (input$plotFacet != "None") {
                                 g <- ggplot(myDat()) +
                                         geom_boxplot(aes_string(input$plotFacet,xvar()),na.rm=TRUE) +
-                                        theme_tufte() + theme(axis.text = element_text(size = 20)) +
                                         labs(title = "Boxplot for Selected Data",
                                              x = xvar(),
-                                             y = "Values") +
-                                        theme(axis.text = element_text(size = 15),
-                                              axis.title = element_text(size = 15),
-                                              title = element_text(size = 15))
+                                             y = "Values")
                         }
                         
                 }
-                g
+                g + theme_stata() +
+                        theme(axis.text = element_text(size = 15),
+                              axis.title = element_text(size = 15),
+                              title = element_text(size = 15))
         })
         output$table <- renderTable({
                 temp <- myDat() %>%

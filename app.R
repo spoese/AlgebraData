@@ -2,6 +2,7 @@ library(shiny)
 library(tidyverse)
 library(ggthemes)
 library(shinythemes)
+library(DT)
 
 ui <- fluidPage(theme = shinytheme("flatly"),
        
@@ -162,10 +163,10 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                          conditionalPanel(
                                                  condition = "input.plotType == 'Histogram'",
                                                  h3("Table of Bins"),
-                                                 tableOutput("histTable")
+                                                 dataTableOutput("histTable")
                                          )),
                                 tabPanel("Table",
-                                         tableOutput("table"))
+                                         dataTableOutput("table"))
                         )
                 )
 )
@@ -362,13 +363,13 @@ server <- function(input, output) {
                               axis.title = element_text(size = 15),
                               title = element_text(size = 15))
         })
-        output$table <- renderTable({
+        output$table <- renderDataTable({
                 temp <- myDat() %>%
                         select(ID,Class.Name,!!xvar())
                 if(input$plotType == "Dotplot"){temp <- cbind(temp,select(myDat(),!!yvar()))}
                 temp
         })
-        output$histTable <- renderTable({
+        output$histTable <- renderDataTable({
                 p <- get_hist(makeHist())
                 ranges <- apply(p,1,function(x) paste("[",max(0,round(x[2],2)),",",min(1,round(x[3],2)),")",sep=""))
                 q <- data.frame(Range = ranges, Percent = p[,4]*100)

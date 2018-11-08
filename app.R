@@ -150,8 +150,8 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                  )
                                                  
                                 )
-                        )
-                        
+                        ),
+                        imageOutput("MClogo")
                 ),
                 mainPanel(
                         tabsetPanel(
@@ -374,6 +374,14 @@ server <- function(input, output) {
                 q <- data.frame(Range = ranges, Percent = p[,4]*100)
                 q
         })
+        output$MClogo <- renderImage({
+                list(src = "./images/MClogo.jpeg",
+                     alt = "MC logo")
+        },deleteFile = FALSE)
+        output$ALEKSlogo <- renderImage({
+                list(src = "./images/ALEKSlogo.jpeg",
+                     alt = "ALEKS logo")
+        },deleteFile = FALSE)
 }
 
 shinyApp(ui = ui, server = server)

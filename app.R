@@ -4,7 +4,7 @@ library(ggthemes)
 
 ui <- fluidPage(
         
-        headerPanel("Data for Algebra (through Oct. 28)"),
+        headerPanel("Data for Algebra (through Nov. 8)"),
         sidebarPanel(
                 h4(strong("Filters:")),
                 textInput("CRN","CRNs: (separate with commas, leave blank for any)"),
@@ -49,11 +49,11 @@ ui <- fluidPage(
                                                          "Overall Grade",
                                                          "Topics/Hour",
                                                          "Time Spent"),
-                                             selected = "Initial Knowledge Check"),
+                                             selected = "Assignments"),
                                conditionalPanel(
                                        condition = "input.x == 'Topic Goals'",
                                        selectInput("topic.x","Number",
-                                                   choices = c("All",1:8))
+                                                   choices = c("All",1:10))
                                ),
                                conditionalPanel(
                                        condition = "input.x == 'Assignments'",
@@ -66,12 +66,15 @@ ui <- fluidPage(
                                                                "6A","6B",
                                                                "7A","7B",
                                                                "8A","8B",
-                                                               "9A","9B"))
+                                                               "9A","9B",
+                                                               "10A","10B",
+                                                               "11A"),
+                                                   selected = "10A")
                                ),
                                conditionalPanel(
                                        condition = "input.x == 'Tests'",
                                        selectInput("test.x","Number",
-                                                   choices = c("All",1:3,"Midterm"))
+                                                   choices = c("All",1:4,"Midterm"))
                                ),
                                conditionalPanel(
                                        condition = "input.x == 'Time Spent'",
@@ -85,7 +88,8 @@ ui <- fluidPage(
                                                                "Sep09","Sep16",
                                                                "Sep23","Sep30",
                                                                "Oct7","Oct14",
-                                                               "Oct21"))
+                                                               "Oct21","Oct28",
+                                                               "Nov4"))
                                )
                         ),
                         conditionalPanel(condition = "input.plotType == 'Dotplot'",
@@ -101,7 +105,7 @@ ui <- fluidPage(
                                                 conditionalPanel(
                                                         condition = "input.y == 'Topic Goals'",
                                                         selectInput("topic.y","Number",
-                                                                    choices = c("All",1:8))
+                                                                    choices = c("All",1:10))
                                                 ),
                                                 conditionalPanel(
                                                         condition = "input.y == 'Assignments'",
@@ -114,13 +118,15 @@ ui <- fluidPage(
                                                                                 "6A","6B",
                                                                                 "7A","7B",
                                                                                 "8A","8B",
-                                                                                "9A","9B"))
+                                                                                "9A","9B",
+                                                                                "10A","10B",
+                                                                                "11A"))
                                                 ),
                                                 conditionalPanel(
                                                         condition = "input.y == 'Tests'",
                                                         selectInput("test.y","Number",
-                                                                    choices = c("All",1:3,"Midterm"),
-                                                                    selected = "Midterm")
+                                                                    choices = c("All",1:4,"Midterm"),
+                                                                    selected = 4)
                                                 ),
                                                 conditionalPanel(
                                                         condition = "input.y == 'Time Spent'",
@@ -134,7 +140,8 @@ ui <- fluidPage(
                                                                                 "Sep09","Sep16",
                                                                                 "Sep23","Sep30",
                                                                                 "Oct7","Oct14",
-                                                                                "Oct21"))
+                                                                                "Oct21","Oct28",
+                                                                                "Nov4"))
                                                 )
                                          ),
                                          checkboxInput("line","Include regression line?",value=TRUE)
@@ -159,7 +166,7 @@ ui <- fluidPage(
 )
 
 ###############################################################################
-dat <- as.data.frame(read_csv("FormattedData.csv"))
+dat <- as.data.frame(read_csv("FormattedDataNov8.csv"))
 dat$Assignment3C <- as.numeric(dat$Assignment3C)
 dat$Type <- as.factor(dat$Type)
 dat$Where <- as.factor(dat$Where)
@@ -245,18 +252,18 @@ server <- function(input, output) {
         })
         xlims <- reactive({
                 if (input$x == "Topics/Hour") {
-                        range(dat[,55:63],na.rm=TRUE)
+                        range(dat[,64:74],na.rm=TRUE)
                 } else if (input$x == "Time Spent") {
-                        range(dat[,64:65],na.rm=TRUE)
+                        range(dat[,75:76],na.rm=TRUE)
                 } else {                
                         range(select(dat,!!xvar()),na.rm = TRUE)
                 }
         })
         ylims <- reactive({
                 if (input$y == "Topics/Hour") {
-                        temp <- range(dat[,55:63],na.rm=TRUE)
+                        temp <- range(dat[,64:74],na.rm=TRUE)
                 } else if (input$y == "Time Spent") {
-                        temp <- range(dat[,64:65],na.rm=TRUE)
+                        temp <- range(dat[,75:76],na.rm=TRUE)
                 } else {                
                         temp <- range(select(dat,!!yvar()),na.rm = TRUE)
                 }

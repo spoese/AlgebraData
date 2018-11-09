@@ -176,14 +176,6 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                               inline = TRUE),
                                                  dataTableOutput("brush_info")
                                          )
-                                         # conditionalPanel(
-                                         #         condition = "input.full == 'Compact'",
-                                         #         dataTableOutput("brush_info_c")
-                                         # ),
-                                         # conditionalPanel(
-                                         #         condition = "input.full == 'Full'",
-                                         #         dataTableOutput("brush_info_f")
-                                         # )
                                 ),
                                 tabPanel("Table",
                                          dataTableOutput("table"))
@@ -398,21 +390,13 @@ server <- function(input, output) {
                 list(src = "./images/MClogo.jpeg",
                      alt = "MC logo")
         },deleteFile = FALSE)
-        # brush_info <- reactive({
-        #         brushedPoints(myDat(),input$brush)[!is.na(brushedPoints(myDat(),input$brush)[,1]),]
-        # })
         output$brush_info <- renderDataTable({
                 brush_temp <- brushedPoints(myDat(),input$brush)[!is.na(brushedPoints(myDat(),input$brush)[,1]),]
                 if (input$full == "Compact") {
                         brush_temp <- select(brush_temp,Student.Name,Class.Name,!!xvar(),!!yvar())
                 }
                 brush_temp
-                # brush_info() %>%
-                #         select(Student.Name,Class.Name,!!xvar(),!!yvar())
         })
-        # output$brush_info_f <- renderDataTable({
-        #         brush_info()
-        # })
 
 }
 

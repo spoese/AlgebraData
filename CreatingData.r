@@ -4,6 +4,8 @@ library(lubridate)
 dat <- tibble()
 classes <- read.csv("Classes.csv",stringsAsFactors = FALSE)
 cNames <- read.csv("cNames.csv",stringsAsFactors = FALSE,header = FALSE)[,1]
+students <- read_xlsx("MATH050 Students.xlsx")
+middles <- read_xlsx("middles.xlsx")
 initial.list <- list()
 for (i in 1:52) {
         print(paste("Reading sheet",i))
@@ -70,3 +72,17 @@ dat$Time.In.Class <- as.numeric(dat$Time.In.Class)
 dat[,77:80] <- apply(dat[,77:80],2,as.factor)
 
 write_csv(dat,"FormattedDataNov8.csv")
+
+aleks <- tibble()
+for (i in 1:1156) {
+        if(!(dat[i,]$Student.Name %in% complete_names)) {
+                aleks <- rbind(aleks,dat[i,])
+        }
+}
+
+mc <- tibble()
+for (i in 1:1241) {
+        if (!(middle.m[i,]$Student.Name %in% complete_names)) {
+                mc <- rbind(mc,middle.m[i,])
+        } 
+}

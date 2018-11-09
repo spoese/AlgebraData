@@ -5,7 +5,7 @@ library(shinythemes)
 library(DT)
 
 ui <- fluidPage(theme = shinytheme("flatly"),
-       
+                
                 headerPanel("Data for Algebra (through Nov. 8)"),
                 sidebarPanel(
                         h4(strong("Filters:")),
@@ -95,17 +95,17 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                        )
                                 ),
                                 
-                                                 column(6,
-                                                        conditionalPanel(condition = "input.plotType == 'Dotplot'",
+                                column(6,
+                                       conditionalPanel(condition = "input.plotType == 'Dotplot'",
                                                         selectInput("y","Variable 2:",
-                                                                       choices = c("Initial Knowledge Check",
-                                                                                   "Topic Goals",
-                                                                                   "Assignments",
-                                                                                   "Tests",
-                                                                                   "Overall Grade",
-                                                                                   "Topics/Hour",
-                                                                                   "Time Spent"),
-                                                                       selected = "Tests"),
+                                                                    choices = c("Initial Knowledge Check",
+                                                                                "Topic Goals",
+                                                                                "Assignments",
+                                                                                "Tests",
+                                                                                "Overall Grade",
+                                                                                "Topics/Hour",
+                                                                                "Time Spent"),
+                                                                    selected = "Tests"),
                                                         conditionalPanel(
                                                                 condition = "input.y == 'Topic Goals'",
                                                                 selectInput("topic.y","Number",
@@ -148,8 +148,8 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                                                                         "Nov4"))
                                                         ),
                                                         checkboxInput("line","Include regression line?",value=TRUE)
-                                                 )
-                                                 
+                                       )
+                                       
                                 )
                         ),
                         imageOutput("MClogo")
@@ -159,12 +159,32 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                 tabPanel("Plot",
                                          h2(textOutput("error")),
                                          tags$head(tags$style("#error{color: red")),
-                                         plotOutput("firstPlot",height = 745),
+                                         plotOutput("firstPlot",height = 745,
+                                                    brush = "brush"),
                                          conditionalPanel(
                                                  condition = "input.plotType == 'Histogram'",
                                                  h3("Table of Bins"),
                                                  dataTableOutput("histTable")
-                                         )),
+                                         ),
+                                         conditionalPanel(
+                                                 condition = "input.plotType == 'Dotplot'",
+                                                 h4("Click and drag on the graph to select points that you wish to see in more detail below."),
+                                                 h3("Selected Points"),
+                                                 radioButtons("full","Info display:",
+                                                              choices = c("Full","Compact"),
+                                                              selected = "Compact",
+                                                              inline = TRUE),
+                                                 dataTableOutput("brush_info")
+                                         )
+                                         # conditionalPanel(
+                                         #         condition = "input.full == 'Compact'",
+                                         #         dataTableOutput("brush_info_c")
+                                         # ),
+                                         # conditionalPanel(
+                                         #         condition = "input.full == 'Full'",
+                                         #         dataTableOutput("brush_info_f")
+                                         # )
+                                ),
                                 tabPanel("Table",
                                          dataTableOutput("table"))
                         )
@@ -172,13 +192,12 @@ ui <- fluidPage(theme = shinytheme("flatly"),
 )
 
 ###############################################################################
-dat <- as.data.frame(read_csv("FormattedDataNov8.csv"))
+dat <- as.data.frame(read_csv("FormattedNov8DataIDs.csv"))
 dat$Assignment3C <- as.numeric(dat$Assignment3C)
 dat$Type <- as.factor(dat$Type)
 dat$Where <- as.factor(dat$Where)
 dat$When <- as.factor(dat$When)
 dat$Days <- as.factor(dat$Days)
-dat$ID <- 1:length(dat$Student.Name)
 get_hist <- function(p) {
         d <- ggplot_build(p)$data[[1]]
         data.frame(x = d$x, xmin = d$xmin, xmax = d$xmax, y = d$y)
@@ -365,7 +384,7 @@ server <- function(input, output) {
         })
         output$table <- renderDataTable({
                 temp <- myDat() %>%
-                        select(ID,Class.Name,!!xvar())
+                        select(Student.Name,Class.Name,!!xvar())
                 if(input$plotType == "Dotplot"){temp <- cbind(temp,select(myDat(),!!yvar()))}
                 temp
         })
@@ -379,10 +398,22 @@ server <- function(input, output) {
                 list(src = "./images/MClogo.jpeg",
                      alt = "MC logo")
         },deleteFile = FALSE)
-        output$ALEKSlogo <- renderImage({
-                list(src = "./images/ALEKSlogo.jpeg",
-                     alt = "ALEKS logo")
-        },deleteFile = FALSE)
+        # brush_info <- reactive({
+        #         brushedPoints(myDat(),input$brush)[!is.na(brushedPoints(myDat(),input$brush)[,1]),]
+        # })
+        output$brush_info <- renderDataTable({
+                brush_temp <- brushedPoints(myDat(),input$brush)[!is.na(brushedPoints(myDat(),input$brush)[,1]),]
+                if (input$full == "Compact") {
+                        brush_temp <- select(brush_temp,Student.Name,Class.Name,!!xvar(),!!yvar())
+                }
+                brush_temp
+                # brush_info() %>%
+                #         select(Student.Name,Class.Name,!!xvar(),!!yvar())
+        })
+        # output$brush_info_f <- renderDataTable({
+        #         brush_info()
+        # })
+
 }
 
 shinyApp(ui = ui, server = server)

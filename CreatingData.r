@@ -9,9 +9,9 @@ cNames <- read.csv("cNames.csv",stringsAsFactors = FALSE,header = FALSE)[,1]
 initial.list <- list()
 for (i in 1:52) {
         print(paste("Reading sheet",i))
-        temp <- read_xlsx("Dec3Data.xlsx",i,skip=9)
+        temp <- read_xlsx("Dec17Data.xlsx",i,skip=9)
         tempNames <- paste("X",1:dim(temp)[2],sep="")
-        initial.list[[i]] <- read_xlsx("Dec3Data.xlsx", i,
+        initial.list[[i]] <- read_xlsx("Dec17Data.xlsx", i,
                                        col_names = tempNames,
                                        col_types = c(rep("guess",dim(temp)[2]-2),rep("text",2)),
                                        na = "-",
@@ -30,18 +30,16 @@ get_CRNs <- function(x){
 adjustments <- function(x){
         if (unique(x$Where) == "DL" | x[1,2] %in% c("24410","24411","24438")){
                 x <- mutate(x,Assignment1B=NA,Assignment2C=NA,Assignment3C=NA,Assignment13B=NA)
-                x <- x[,c(1:53,100,54,55,101,56,57,102,58:76,103,77:99)]
+                x <- x[,c(1:57,108,58,59,109,60,61,110,62:80,111,81:107)]
         } else if (unique(x$When == "Late") & unique(x$Days != 1)) {
-                x <- mutate(x,Topics11=NA,Topics14=NA,Assignment3C=NA,Assignment12B=NA,Assignment14A=NA,Assignment14B=NA)
-                x <- x[,c(1:48,98,49,50,99,51:57,100,58:74,101,75,76,102,103,77:97)]
+                x <- mutate(x,Topics11=NA,Topics14=NA,Assignment3C=NA,Assignment12B=NA,Assignment15A=NA,Assignment15B=NA)
+                x <- x[,c(1:52,106,53,54,107,55:61,108,62:78,109,79:82,110,111,83:105)]
         } else if (unique(x$Days == 1)) {
-                x <- mutate(x,Test6.Date=NA,Test6.Reason=NA,Test6.Percent=NA,Test6.Topics=NA,
-                            Topics1=NA,Topics14=NA,
-                            Assignment1B=NA,Assignment12B=NA,Assignment14A=NA,Assignment14B=NA)
-                x <- x[,c(1:30,94:97,31:34,98,35:46,99,47,100,48:70,101,71,72,102,103,73:93)]
+                x <- mutate(x,Topics1=NA,Assignment1B=NA,Assignment12B=NA,Assignment14B=NA,Assignment15B=NA)
+                x <- x[,c(1:42,107,43:56,108,57:79,109,80:82,110,83,111,84:106)]
         } else {
                 x <- mutate(x,Topics12=NA,Assignment1B=NA,Assignment2C=NA,Assignment3C=NA,Assignment13B=NA)
-                x <- x[,c(1:49,99,50:53,100,54,55,101,56,57,102,58:76,103,77:98)]
+                x <- x[,c(1:53,107,54:56,108,57,58,109,59,60,110,61:79,111,80:106)]
         }
 }
 
@@ -72,10 +70,10 @@ dat$Total.Time <- as.numeric(dat$Total.Time)
 dat$Time.In.Class <- as.numeric(dat$Time.In.Class)
 
 #Change filters to factor
-dat[,100:103] <- apply(dat[,100:103],2,as.factor)
+dat[,108:111] <- apply(dat[,108:111],2,as.factor)
 
 nameToID <- read_csv("NameIdReference.csv")
 dat$Student.Name <- tolower(dat$Student.Name)
-dat <- merge(dat,nameToID)[,c(104,2:103)]
+dat <- merge(dat,nameToID)[,c(112,2:111)]
 
-write_csv(dat,"FormattedDataDec3.csv")
+write_csv(dat,"FormattedDataDec17.csv")
